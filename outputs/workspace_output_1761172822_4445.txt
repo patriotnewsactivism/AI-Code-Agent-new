@@ -1,0 +1,8 @@
+npm error code EJSONPARSE
+npm error path /workspace/package.json
+npm error JSON.parse Unexpected token "<" (0x3C), "<content>{"... is not valid JSON while parsing '<content>{
+npm error JSON.parse   "name": "ai-code-agent",
+npm error JSON.parse   '
+npm error JSON.parse Failed to parse JSON data.
+npm error JSON.parse Note: package.json must be actual JSON, not just JavaScript.
+npm error A complete log of this run can be found in: /root/.npm/_logs/2025-10-22T22_40_22_957Z-debug-0.log
