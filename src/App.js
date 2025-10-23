@@ -228,9 +228,6 @@ export default function App() {
     setError(null);
     setAgentLog("Contacting AI agent...");
 
-    // Use the correct API endpoint
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent`;
-    
     // Provide context to the AI
     const fileList = files.map(f => f.path);
     const contextPrompt = `
@@ -245,36 +242,27 @@ export default function App() {
       ---
     `;
 
-    const payload = {
-      contents: [{ parts: [{ text: contextPrompt }] }],
-      systemInstruction: {
-        parts: [{ text: systemPrompt }]
-      },
-      generationConfig: {
-        responseMimeType: "application/json",
-      }
+    // This is the payload your backend will receive
+    const backendPayload = {
+      systemPrompt: systemPrompt,
+      contextPrompt: contextPrompt
     };
 
     try {
-      // Get API key from environment variable
-      const apiKey = import.meta.env.VITE_GEMINI_API_KEY || "";
-      
-      if (!apiKey) {
-        throw new Error("API key not found. Please set VITE_GEMINI_API_KEY in your environment variables.");
-      }
-
-      const result = await fetchWithBackoff(`${apiUrl}?key=${apiKey}`, {
+      // Call your own backend proxy
+      const response = await fetchWithBackoff("/api/generate", {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(backendPayload)
       });
 
-      const candidate = result.candidates?.[0];
-      if (!candidate || !candidate.content?.parts?.[0]?.text) {
-        throw new Error("Invalid response structure from API.");
+      // The backend proxy should return the same JSON structure the AI would.
+      const jsonResponse = response; // Assuming fetchWithBackoff parses JSON
+      
+      if (!jsonResponse.thought || !jsonResponse.operations) {
+         throw new Error("Invalid response structure from backend.");
       }
-
-      const jsonResponse = JSON.parse(candidate.content.parts[0].text);
+      
       setAgentLog(jsonResponse.thought || "Agent executed plan.");
 
       // Apply file operations
