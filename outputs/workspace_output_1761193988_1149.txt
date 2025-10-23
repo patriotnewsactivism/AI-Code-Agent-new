@@ -1,0 +1,2 @@
+bash: -c: line 2: syntax error near unexpected token `newline'
+bash: -c: line 2: `pkill -f "python3 -m http.server"</execute_command>'

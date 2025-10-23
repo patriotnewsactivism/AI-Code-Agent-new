@@ -1,0 +1,6 @@
+57a9269 Add remaining files and finalize project structure
+8159835 Update README with comprehensive project information
+5a7a8c7 Add deployment instructions
+3c7ebab Add deployment script
+71c95e0 Add .gitignore file
+f7ed8ab Initial commit: AI Code Agent with enhanced features
