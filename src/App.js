@@ -1,4 +1,4 @@
-<content>import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { 
   FileCode, Play, Sparkles, Loader2, TriangleAlert, Bot, User, CornerDownLeft, 
   Terminal, Github, FilePlus, Trash2, FolderGit2, UploadCloud, DownloadCloud,
@@ -197,7 +197,7 @@ export default function App() {
       if (src.startsWith('http') || src.startsWith('//')) return match; // Keep external scripts
       const scriptFile = files.find(f => f.path === src);
       if (scriptFile) {
-        return `<script>${scriptFile.content}<\/script>`;
+        return `<script>${scriptFile.content}</script>`;
       }
       console.warn(`Could not find local script: ${src}`);
       return ''; // Remove if not found
@@ -228,9 +228,6 @@ export default function App() {
     setError(null);
     setAgentLog("Contacting AI agent...");
 
-    const apiKey = ""; // API key is handled by the environment
-    const apiUrl = `https://generativelace.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
-    
     // Provide context to the AI
     const fileList = files.map(f => f.path);
     const contextPrompt = `
@@ -245,29 +242,27 @@ export default function App() {
       ---
     `;
 
-    const payload = {
-      contents: [{ parts: [{ text: contextPrompt }] }],
-      systemInstruction: {
-        parts: [{ text: systemPrompt }]
-      },
-      generationConfig: {
-        responseMimeType: "application/json",
-      }
+    // This is the payload your backend will receive
+    const backendPayload = {
+      systemPrompt: systemPrompt,
+      contextPrompt: contextPrompt
     };
 
     try {
-      const result = await fetchWithBackoff(apiUrl, {
+      // Call your own backend proxy
+      const response = await fetchWithBackoff("/api/generate", {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(backendPayload)
       });
 
-      const candidate = result.candidates?.[0];
-      if (!candidate || !candidate.content?.parts?.[0]?.text) {
-        throw new Error("Invalid response structure from API.");
+      // The backend proxy should return the same JSON structure the AI would.
+      const jsonResponse = response; // Assuming fetchWithBackoff parses JSON
+      
+      if (!jsonResponse.thought || !jsonResponse.operations) {
+         throw new Error("Invalid response structure from backend.");
       }
-
-      const jsonResponse = JSON.parse(candidate.content.parts[0].text);
+      
       setAgentLog(jsonResponse.thought || "Agent executed plan.");
 
       // Apply file operations
@@ -369,15 +364,6 @@ export default function App() {
       setIsMobileMenuOpen(false);
     } else if (newFileName) {
       alert("A file with that name already exists.");
-    }
-  };
-
-  const handleDeleteFile = (path) => {
-    if (confirm(`Are you sure you want to delete ${path}?`)) {
-      setFiles(files.filter(f => f.path !== path));
-      if (activeFilePath === path) {
-        setActiveFilePath(files.length > 1 ? files[0].path : null);
-      }
     }
   };
 
@@ -677,6 +663,24 @@ export default function App() {
                 />
               </div>
             </div>
+            <div className="flex items-center justify-between mt-2">
+              <label className="text-sm flex items-center">
+                <Moon className="w-4 h-4 mr-2" />
+                Dark Mode
+              </label>
+              <div 
+                onClick={() => setDarkMode(!darkMode)}
+                className={`relative inline-flex h-5 w-9 items-center rounded-full cursor-pointer ${
+                  darkMode ? 'bg-blue-600' : 'bg-gray-600'
+                }`}
+              >
+                <span 
+                  className={`inline-block h-3 w-3 transform rounded-full bg-white transition ${
+                    darkMode ? 'translate-x-5' : 'translate-x-1'
+                  }`}
+                />
+              </div>
+            </div>
           </div>
         )}
         
@@ -811,6 +815,15 @@ export default function App() {
     </div>
   );
 
+  const handleDeleteFile = (path) => {
+    if (confirm(`Are you sure you want to delete ${path}?`)) {
+      setFiles(files.filter(f => f.path !== path));
+      if (activeFilePath === path) {
+        setActiveFilePath(files.length > 1 ? files.filter(f => f.path !== path)[0].path : null);
+      }
+    }
+  };
+
   return (
     <div className={`flex h-screen ${darkMode ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-900'} font-sans overflow-hidden`}>
       {/* --- Desktop Layout --- */}
@@ -919,4 +932,3 @@ export default function App() {
     </div>
   );
 }
-</content>
